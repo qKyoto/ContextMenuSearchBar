@@ -1,0 +1,21 @@
+{
+  "name": "com.garchik.context-menu-search-bar",
+  "version": "1.0.2",
+  "displayName": "Context Menu Search Bar",
+  "description": "Brings back the search bar in the Project window context menu (right-click and the '+' Create button). Type to filter every item of the Assets menu, including all Create submenus.",
+  "unity": "2021.3",
+  "keywords": [
+    "editor",
+    "context menu",
+    "search",
+    "project window",
+    "create menu",
+    "productivity"
+  ],
+  "author": {
+    "name": "Anatoly Garchik",
+    "email": "anatoly.garchik@gmail.com"
+  },
+  "license": "MIT",
+  "type": "tool"
+}
