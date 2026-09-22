@@ -190,8 +190,8 @@ namespace ContextMenuSearchBar.Editor
 
         private static readonly GUIContent[] s_AnchorModeLabels =
         {
-            new GUIContent("Re-place at cursor"),
             new GUIContent("Keep top-left corner"),
+            new GUIContent("Re-place at cursor")
         };
 
         private static void DrawPreferences()
