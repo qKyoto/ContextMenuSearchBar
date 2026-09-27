@@ -60,7 +60,7 @@ namespace ContextMenuSearchBar.Editor
             get
             {
                 if (!s_AnchorMode.HasValue)
-                    s_AnchorMode = EditorPrefs.GetInt(Prefix + "AnchorMode", (int)PopupAnchorMode.ReplaceAtCursor);
+                    s_AnchorMode = EditorPrefs.GetInt(Prefix + "AnchorMode", (int)PopupAnchorMode.KeepTopLeft);
                 return (PopupAnchorMode)s_AnchorMode.Value;
             }
             set
