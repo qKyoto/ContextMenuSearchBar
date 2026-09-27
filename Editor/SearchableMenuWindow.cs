@@ -182,7 +182,14 @@ namespace ContextMenuSearchBar.Editor
             return -1;
         }
 
-        private static bool IsSelectable(MenuNode node) => node != null && !node.IsSeparator && node.IsEnabled;
+        private static bool IsSelectable(MenuNode node)
+        {
+            if (node == null || node.IsSeparator)
+                return false;
+
+            MenuTreeBuilder.ResolveState(node);
+            return node.IsEnabled;
+        }
 
         private void ApplyPendingResize()
         {
@@ -472,6 +479,8 @@ namespace ContextMenuSearchBar.Editor
                 return;
             }
 
+            MenuTreeBuilder.ResolveState(node);
+
             bool enabled = node.IsEnabled;
             bool highlight = selected && enabled;
             if (highlight)
@@ -570,7 +579,7 @@ namespace ContextMenuSearchBar.Editor
                     GUIUtility.ExitGUI();
                     return;
                 case KeyCode.RightArrow:
-                    if (!SearchMode && m_Selected >= 0 && m_Selected < m_Rows.Count && m_Rows[m_Selected].IsSubmenu && m_Rows[m_Selected].IsEnabled)
+                    if (!SearchMode && m_Selected >= 0 && m_Selected < m_Rows.Count && m_Rows[m_Selected].IsSubmenu && IsSelectable(m_Rows[m_Selected]))
                     {
                         Activate(m_Rows[m_Selected], true);
                         e.Use();

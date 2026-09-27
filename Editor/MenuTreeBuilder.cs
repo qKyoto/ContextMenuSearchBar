@@ -25,6 +25,10 @@ namespace ContextMenuSearchBar.Editor
         private static MethodInfo s_GetHotkey;         // string GetHotkey(string)
         private static MethodInfo s_UpdateAllMenus;    // EditorUtility.Internal_UpdateAllMenus()
         private static MethodInfo s_UpdateContextMenu; // Menu.UpdateContextMenu(Object[] context, int userData)
+        private static MethodInfo s_GetEnabledWithContext; // bool GetEnabledWithContext(string, Object[])
+
+        /// <summary>Selection the menu was built for; validate methods are asked about it.</summary>
+        private static UnityEngine.Object[] s_Context;
         private static PropertyInfo s_ItemPath, s_ItemPriority, s_ItemIsSeparator;
 
         private static void Resolve()
@@ -41,6 +45,7 @@ namespace ContextMenuSearchBar.Editor
             s_GetChecked = menuType.GetMethod("GetChecked", AnyStatic, null, new[] { typeof(string) }, null);
             s_GetHotkey = menuType.GetMethod("GetHotkey", AnyStatic, null, new[] { typeof(string) }, null);
             s_UpdateContextMenu = menuType.GetMethod("UpdateContextMenu", AnyStatic, null, new[] { typeof(UnityEngine.Object[]), typeof(int) }, null);
+            s_GetEnabledWithContext = menuType.GetMethod("GetEnabledWithContext", AnyStatic, null, new[] { typeof(string), typeof(UnityEngine.Object[]) }, null);
             s_UpdateAllMenus = typeof(EditorUtility).GetMethod("Internal_UpdateAllMenus", AnyStatic, null, Type.EmptyTypes, null);
 
             var itemType = editorAssembly.GetType("UnityEditor.ScriptingMenuItem");
@@ -63,6 +68,7 @@ namespace ContextMenuSearchBar.Editor
 
             rootPath = rootPath.TrimEnd('/');
             var root = new MenuNode { Path = rootPath, Name = LastSegment(rootPath), Children = new List<MenuNode>() };
+            s_Context = Selection.objects;
 
             // Runs every menu validation method so enabled/checked states reflect the current selection,
             // exactly like Unity does right before it shows a native context menu.
@@ -97,10 +103,10 @@ namespace ContextMenuSearchBar.Editor
         {
             try
             {
-                if (s_UpdateAllMenus != null)
-                    s_UpdateAllMenus.Invoke(null, null);
-                else
-                    s_UpdateContextMenu?.Invoke(null, new object[] { Array.Empty<UnityEngine.Object>(), 0 });
+                s_UpdateAllMenus?.Invoke(null, null);
+
+                // Tells Unity which objects the menu is about, the way a native context menu would.
+                s_UpdateContextMenu?.Invoke(null, new object[] { s_Context ?? Array.Empty<UnityEngine.Object>(), 0 });
             }
             catch (Exception e)
             {
@@ -294,8 +300,6 @@ namespace ContextMenuSearchBar.Editor
                 if (child.IsSeparator) continue;
 
                 child.ParentPath = parentPath;
-                child.IsEnabled = Query(s_GetEnabled, child.Path, true);
-                child.IsChecked = child.IsSubmenu ? false : Query(s_GetChecked, child.Path, false);
                 if (!child.IsSubmenu && s_GetHotkey != null)
                 {
                     try
@@ -311,6 +315,41 @@ namespace ContextMenuSearchBar.Editor
                 if (child.IsSubmenu)
                     FillItemStates(child, string.IsNullOrEmpty(parentPath) ? child.Name : parentPath + " › " + child.Name);
             }
+        }
+
+        /// <summary>
+        /// Asks Unity whether the item is enabled and checked, once per item.
+        /// This runs the item's validate function, so it is called only for items the popup actually shows:
+        /// validating a whole menu up front is both slower and a good way to trip over a third-party
+        /// validate method that does not expect to run outside a real context menu.
+        /// </summary>
+        public static void ResolveState(MenuNode node)
+        {
+            if (node == null || node.IsSeparator || node.StateResolved)
+                return;
+
+            node.StateResolved = true;
+            node.IsEnabled = QueryEnabled(node.Path);
+            node.IsChecked = node.IsSubmenu ? false : Query(s_GetChecked, node.Path, false);
+        }
+
+        // Validate methods expect the same context a native context menu would give them (the clicked
+        // assets), so the selection captured when the menu was built is passed along when possible.
+        private static bool QueryEnabled(string path)
+        {
+            if (s_GetEnabledWithContext != null && s_Context != null && s_Context.Length > 0)
+            {
+                try
+                {
+                    return (bool)s_GetEnabledWithContext.Invoke(null, new object[] { path, s_Context });
+                }
+                catch
+                {
+                    // fall through to the context-less query
+                }
+            }
+
+            return Query(s_GetEnabled, path, true);
         }
 
         private static bool Query(MethodInfo method, string path, bool fallback)

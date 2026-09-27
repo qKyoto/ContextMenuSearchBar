@@ -22,6 +22,12 @@ namespace ContextMenuSearchBar.Editor
         public bool IsEnabled = true;
         public bool IsChecked;
 
+        /// <summary>
+        /// Whether <see cref="IsEnabled"/> and <see cref="IsChecked"/> were queried from Unity yet.
+        /// Asking runs the item's validate function, so it is done only for items that are actually shown.
+        /// </summary>
+        public bool StateResolved;
+
         /// <summary>Human readable shortcut ("Ctrl+R"), empty when none.</summary>
         public string Shortcut = string.Empty;
 
