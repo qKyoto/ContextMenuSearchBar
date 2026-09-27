@@ -2,6 +2,9 @@
 
 ## [1.0.3] - 2026-09-27
 
+### Fixed
+- The two options of "When the list changes" were listed in the wrong order, so the preference showed one mode while the other was in effect. The dropdown order is now independent of the value that is stored.
+
 ### Changed
 - Whether an item is enabled or checked is now asked for only when the item is actually shown, instead of validating the whole menu on open. Opening is faster in projects with many menu items, and validate methods of other packages run no more often than with the native menu.
 - Validate methods are given the assets the menu was opened for, the way Unity does for a native context menu. Without that context a third-party validate method could fail — an IndexOutOfRangeException from FImpossible Creations' asset tools was reported this way.

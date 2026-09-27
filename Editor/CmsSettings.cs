@@ -188,10 +188,17 @@ namespace ContextMenuSearchBar.Editor
             };
         }
 
+        // The order shown in the dropdown, which is independent of the enum values stored in EditorPrefs.
+        private static readonly PopupAnchorMode[] s_AnchorModeOrder =
+        {
+            PopupAnchorMode.KeepTopLeft,
+            PopupAnchorMode.ReplaceAtCursor,
+        };
+
         private static readonly GUIContent[] s_AnchorModeLabels =
         {
             new GUIContent("Keep top-left corner"),
-            new GUIContent("Re-place at cursor")
+            new GUIContent("Re-place at cursor"),
         };
 
         private static void DrawPreferences()
@@ -223,11 +230,13 @@ namespace ContextMenuSearchBar.Editor
                         ShowShortcuts);
                     MaxHeight = EditorGUILayout.IntSlider(
                         new GUIContent("Max popup height", "Taller menus get a scrollbar."), MaxHeight, 200, 1200);
-                    AnchorMode = (PopupAnchorMode)EditorGUILayout.Popup(
+                    int anchorIndex = Mathf.Max(0, System.Array.IndexOf(s_AnchorModeOrder, AnchorMode));
+                    anchorIndex = EditorGUILayout.Popup(
                         new GUIContent("When the list changes",
-                            "Re-place at cursor: the popup is positioned again relative to the click point, like a native menu would be, so it may jump.\n" +
-                            "Keep top-left corner: the popup stays where it opened and only grows downwards; when it reaches the screen edge the list scrolls."),
-                        (int)AnchorMode, s_AnchorModeLabels);
+                            "Keep top-left corner: the popup stays where it opened and only grows downwards; when it reaches the screen edge the list scrolls.\n" +
+                            "Re-place at cursor: the popup is positioned again relative to the click point, like a native menu would be, so it may jump."),
+                        anchorIndex, s_AnchorModeLabels);
+                    AnchorMode = s_AnchorModeOrder[Mathf.Clamp(anchorIndex, 0, s_AnchorModeOrder.Length - 1)];
 
                     GUILayout.Space(8f);
                     DrawAppearance();
